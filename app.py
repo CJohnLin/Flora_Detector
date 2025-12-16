@@ -7,7 +7,7 @@ import os
 import random
 import numpy as np
 import cv2  # 確保 cv2 (OpenCV) 模組已引入
-# import utils  # 如果您將 Grad-CAM 放在 utils.py 中，則需要引入
+import utils  # 【修復點一：添加 utils 模組引入】
 
 # --- 1. 常量設定 ---
 MODEL_PATH = 'flower_classifier.pth'
@@ -24,14 +24,14 @@ if not os.path.exists(MODEL_PATH) or not os.path.exists(CLASS_NAMES_PATH):
 @st.cache_resource
 def load_model():
     """載入微調後的 ResNet50 模型並設定為評估模式"""
-    # 載入模型結構，使用 IMAGENET1K_V1 權重作為起點，這解決了您訓練時遇到的版本問題
+    # 載入模型結構，使用 IMAGENET1K_V1 權重作為起點
     model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
     
     # 修改最後一層全連接層以匹配 102 個類別
     num_ftrs = model.fc.in_features
     model.fc = torch.nn.Linear(num_ftrs, 102)
 
-    # 載入訓練好的權重
+    # 載入訓練好的權重，強制在 CPU 上運行
     try:
         model.load_state_dict(torch.load(MODEL_PATH, map_location=torch.device('cpu')))
     except Exception as e:
@@ -78,14 +78,14 @@ def predict_image(image_pil):
         
         return predicted_name, confidence, predicted_index
 
-# --- 4. 隨機選圖函數 (移除快取，確保每次都隨機) ---
+# --- 4. 隨機選圖函數 (從 ./dataset/test/ 中選取) ---
 
 def get_random_test_image_path(test_data_dir):
-    """從測試集目錄中隨機選取一張圖片的路徑 (直接從根目錄抽取)"""
+    """從測試集目錄中隨機選取一張圖片的路徑"""
     try:
-        # 處理 test 圖片直接放在根目錄下的情況
         all_files = os.listdir(test_data_dir)
         
+        # 篩選出圖片檔案
         image_files = [f for f in all_files 
                        if os.path.isfile(os.path.join(test_data_dir, f)) and 
                        f.lower().endswith(('.png', '.jpg', '.jpeg'))]
@@ -113,11 +113,9 @@ if 'show_cam' not in st.session_state:
 # --- 圖片選擇與隨機選圖 ---
 st.header("🖼️ 選擇花卉圖片")
 
-# 使用 file_uploader 讓用戶上傳圖片
-uploaded_file = st.file_uploader("上傳一張圖片 (或從左側隨機選取)", type=["jpg", "jpeg", "png"])
+uploaded_file = st.file_uploader("上傳一張圖片", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
-    # 如果用戶上傳了新圖片，更新 session state
     st.session_state.image_path = uploaded_file
     st.session_state.show_cam = False # 上傳新圖，重設 CAM 狀態
 
@@ -125,32 +123,27 @@ if uploaded_file is not None:
 with st.sidebar:
     st.header("🕹️ 應用程式控制")
     
-    # 修復重複元素 ID 錯誤: 使用唯一的 key 參數
-    if st.button("🎲 隨機選取測試圖片", key="random_btn"): 
-        # 1. 取得隨機圖片路徑
+    # 隨機選圖按鈕 (確保 key 唯一)
+    if st.button("🎲 隨機選取測試圖片", key="random_btn_final"): 
         random_path, error = get_random_test_image_path(TEST_DATA_DIR)
         
         if error:
             st.error(error)
         else:
-            # 2. 儲存路徑並重設 CAM 狀態
             st.session_state.image_path = random_path
             st.session_state.show_cam = False
-            # 3. 強制 Streamlit 重新運行，以便載入新圖片
             st.rerun() 
             
-    # CAM 顯示控制
+    # CAM 顯示控制按鈕 (確保 key 唯一)
     if st.session_state.image_path:
-        # 修復重複元素 ID 錯誤: 使用唯一的 key 參數
-        if st.button("🔥 顯示 Grad-CAM 熱圖", key="cam_btn"):
+        if st.button("🔥 顯示 Grad-CAM 熱圖", key="cam_btn_final"):
             st.session_state.show_cam = not st.session_state.show_cam
-            # st.rerun() # 如果不需要立即顯示，可以不使用 rerun
-        
+            # 這裡不使用 rerun，讓邏輯在主腳本中執行
+
 # --- 6. 圖片處理與結果顯示 ---
 
 current_image = None
 if st.session_state.image_path:
-    # 判斷是上傳的檔案還是本地檔案路徑
     if isinstance(st.session_state.image_path, str):
         # 處理本地檔案路徑 (隨機選圖)
         current_image = Image.open(st.session_state.image_path).convert('RGB')
@@ -174,27 +167,25 @@ if current_image:
         st.metric(label="信心度", value=f"{confidence:.2%}")
         st.markdown(f"---")
         
-# app.py (在顯示 Grad-CAM 的部分)
+        # 【修復點二：正確調用 Grad-CAM 邏輯】
+        if st.session_state.show_cam:
+            try:
+                # 調用 utils.py 中定義的 generate_grad_cam 函數
+                cam_image = utils.generate_grad_cam(
+                    model_ft,           # PyTorch 模型
+                    current_image,      # 原始 PIL 圖片
+                    predicted_index,    # 預測的類別索引
+                    data_transform      # 圖像預處理
+                ) 
+                
+                st.subheader("🔥 Grad-CAM 熱圖")
+                # 顯示由 utils 函數返回的 cam_image
+                st.image(cam_image, caption="Grad-CAM 視覺化結果", use_column_width=True) 
 
-if st.session_state.show_cam:
-    try:
-        # 確保 data_transform 已經在 app.py 頂部定義
-        # data_transform = transforms.Compose([...]) 
-        
-        # 真正調用 utils.py 中定義的 Grad-CAM 函數
-        cam_image = utils.generate_grad_cam(
-            model_ft,           # 您的模型
-            current_image,      # 當前顯示的 PIL 圖片
-            predicted_index,    # 預測的類別索引 (來自 predict_image 函數)
-            data_transform      # 圖像預處理
-        ) 
-        
-        st.subheader("🔥 Grad-CAM 熱圖")
-        # 顯示由 utils 函數返回的 cam_image
-        st.image(cam_image, caption="Grad-CAM 視覺化結果", use_column_width=True) 
+            except Exception as e:
+                st.error(f"❌ Grad-CAM 運算出錯: {e}")
+                st.exception(e) # 顯示完整的錯誤堆疊資訊
+                
 
-    except Exception as e:
-        st.error(f"❌ Grad-CAM 運算出錯: {e}")
-        st.exception(e) # 顯示完整的錯誤堆疊資訊，有助於除錯
 else:
     st.info("請在左側上傳圖片或點擊按鈕隨機選取圖片開始辨識。")
