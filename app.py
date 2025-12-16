@@ -174,21 +174,27 @@ if current_image:
         st.metric(label="信心度", value=f"{confidence:.2%}")
         st.markdown(f"---")
         
-        # 檢查是否顯示 CAM
-        if st.session_state.show_cam:
-            try:
-                # ----------------------------------------------------
-                # ⚠️ 這裡需要插入您的 Grad-CAM 運算邏輯
-                # 假設您有一個名為 generate_grad_cam 的函數，並返回 PIL 圖片
-                # cam_image = utils.generate_grad_cam(model_ft, current_image, predicted_index) 
-                # ----------------------------------------------------
-                
-                st.subheader("🔥 Grad-CAM 熱圖")
-                # 暫時使用原始圖片代替 CAM 圖像，直到您補齊 Grad-CAM 邏輯
-                st.image(current_image, caption="請將此處替換為您的 Grad-CAM 圖像", use_column_width=True) 
+# app.py (在顯示 Grad-CAM 的部分)
 
-            except Exception as e:
-                st.error(f"❌ Grad-CAM 運算出錯: {e}")
+if st.session_state.show_cam:
+    try:
+        # 確保 data_transform 已經在 app.py 頂部定義
+        # data_transform = transforms.Compose([...]) 
+        
+        # 真正調用 utils.py 中定義的 Grad-CAM 函數
+        cam_image = utils.generate_grad_cam(
+            model_ft,           # 您的模型
+            current_image,      # 當前顯示的 PIL 圖片
+            predicted_index,    # 預測的類別索引 (來自 predict_image 函數)
+            data_transform      # 圖像預處理
+        ) 
+        
+        st.subheader("🔥 Grad-CAM 熱圖")
+        # 顯示由 utils 函數返回的 cam_image
+        st.image(cam_image, caption="Grad-CAM 視覺化結果", use_column_width=True) 
 
+    except Exception as e:
+        st.error(f"❌ Grad-CAM 運算出錯: {e}")
+        st.exception(e) # 顯示完整的錯誤堆疊資訊，有助於除錯
 else:
     st.info("請在左側上傳圖片或點擊按鈕隨機選取圖片開始辨識。")
