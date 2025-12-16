@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import streamlit as st
 import torch
 from torchvision import transforms, models
@@ -265,7 +264,7 @@ st.sidebar.subheader("📋 HW5 共同要求")
 st.sidebar.success("1. ChatGPT / AI Agent 對話過程 (必要)")
 st.sidebar.success("2. GitHub Repository (必要)")
 st.sidebar.success("3. Streamlit.app Demo 連結 (必要)")
-=======
+
 import streamlit as st
 import torch
 from torchvision import transforms, models
@@ -532,5 +531,4 @@ st.sidebar.subheader("📋 HW5 共同要求")
 st.sidebar.success("1. ChatGPT / AI Agent 對話過程 (必要)")
 st.sidebar.success("2. GitHub Repository (必要)")
 st.sidebar.success("3. Streamlit.app Demo 連結 (必要)")
->>>>>>> 8460da84b97b74fb77bea4ebbd2755ac1222bf2f
 st.sidebar.markdown("請將所有檔案推送到 GitHub，並部署 Streamlit。")
