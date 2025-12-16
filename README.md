@@ -46,3 +46,6 @@ Proceedings of the Indian Conference on Computer Vision, Graphics and Image Proc
 * Original source of this data can be found in <a href="https://www.robots.ox.ac.uk/~vgg/data/flowers/102/"> 102 Category Flower Dataset</a>
 * Original readme from author can be found in <a href="https://www.robots.ox.ac.uk/~vgg/data/flowers/102/README.txt">AUTHOR README</a>
 * Directory test is added from another kaggle dataset that can be found in <a href="https://www.kaggle.com/c/oxford-102-flower-pytorch/">Oxford 102 Flower Pytorch</a>
+=======
+# Flora_Detector
+>>>>>>> 69fa0251df37579f1ea2ca7e8f750e7770b0660d
