@@ -1,6 +1,13 @@
+<<<<<<< HEAD
 *.pth filter=lfs diff=lfs merge=lfs -text
 *.jpg filter=lfs diff=lfs merge=lfs -text
 *.jpeg filter=lfs diff=lfs merge=lfs -text
 *.png filter=lfs diff=lfs merge=lfs -text
 *.fileextension filter=lfs diff=lfs merge=lfs -text
 C:/Users/林佳宏/Desktop/Flora/flower_classifier.pth filter=lfs diff=lfs merge=lfs -text
+=======
+*.pth filter=lfs diff=lfs merge=lfs -text
+*.jpg filter=lfs diff=lfs merge=lfs -text
+*.jpeg filter=lfs diff=lfs merge=lfs -text
+*.png filter=lfs diff=lfs merge=lfs -text
+>>>>>>> 8460da84b97b74fb77bea4ebbd2755ac1222bf2f
